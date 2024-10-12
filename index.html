@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Attendance Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .qr-codes {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 40px;
+        }
+        .qr-code {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .qr-code img {
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        select, button, input {
+            margin: 10px 5px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #27ae60;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .calendar-header {
+            grid-column: span 7;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .calendar-day.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .calendar-day.today {
+            border: 2px solid #e74c3c;
+        }
+        .calendar-day .attendance-count {
+            font-size: 0.8em;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <h1>STI ADMIN Attendance Dashboard</h1>
+    
+    <div class="qr-codes">
+        <div class="qr-code">
+            <h2>Check-in QR Code</h2>
+            <div id="checkInQR"></div>
+        </div>
+        <div class="qr-code">
+            <h2>Check-out QR Code</h2>
+            <div id="checkOutQR"></div>
+        </div>
+    </div>
+
+    <h2>Attendance Calendar</h2>
+    <div>
+        <input type="text" id="eventName" placeholder="Enter event name">
+        <input type="date" id="eventDate">
+        <button id="addEventButton">Add Event</button>
+    </div>
+    <div>
+        <select id="eventSelect">
+            <option value="">Select an event</option>
+        </select>
+    </div>
+    <div id="calendar" class="calendar"></div>
+
+    <h2>Attendance List</h2>
+    <div>
+        <select id="strandFilter">
+            <option value="">All Strands</option>
+            <option value="STEM">STEM</option>
+            <option value="HUMSS">HUMSS</option>
+            <option value="ABM">ABM</option>
+            <option value="GAS">GAS</option>
+        </select>
+        <button id="refreshButton">Refresh Data</button>
+    </div>
+    <table id="attendanceTable">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Student ID</th>
+                <th>Strand</th>
+                <th>Check-in Time</th>
+                <th>Check-out Time</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        // Generate QR codes
+        new QRCode(document.getElementById("checkInQR"), {
+            text: "check-in",
+            width: 200,
+            height: 200
+        });
+        new QRCode(document.getElementById("checkOutQR"), {
+            text: "check-out",
+            width: 200,
+            height: 200
+        });
+
+        // Calendar functionality
+        const eventSelect = document.getElementById('eventSelect');
+        const calendar = document.getElementById('calendar');
+        let events = JSON.parse(localStorage.getItem('events')) || [];
+        let selectedDate = null;
+
+        function updateEventSelect() {
+            eventSelect.innerHTML = '<option value="">Select an event</option>';
+            events.forEach(event => {
+                const option = document.createElement('option');
+                option.value = event.id;
+                option.textContent = `${event.name} (${event.date})`;
+                eventSelect.appendChild(option);
+            });
+        }
+
+        function getAttendanceForDate(date) {
+            const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
+            return attendanceData.filter(student => {
+                const checkInDate = new Date(student.checkInTime).toDateString();
+                return checkInDate === date.toDateString();
+            });
+        }
+
+        function renderCalendar(eventId) {
+            const event = events.find(e => e.id === eventId);
+            if (!event) {
+                calendar.innerHTML = '<p>Please select an event</p>';
+                return;
+            }
+
+            const eventDate = new Date(event.date);
+            const year = eventDate.getFullYear();
+            const month = eventDate.getMonth();
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+
+            calendar.innerHTML = `
+                <div class="calendar-header">${eventDate.toLocaleString('default', { month: 'long' })} ${year}</div>
+                <div class="calendar-day">Sun</div>
+                <div class="calendar-day">Mon</div>
+                <div class="calendar-day">Tue</div>
+                <div class="calendar-day">Wed</div>
+                <div class="calendar-day">Thu</div>
+                <div class="calendar-day">Fri</div>
+                <div class="calendar-day">Sat</div>
+            `;
+
+            for (let i = 0; i < firstDay.getDay(); i++) {
+                calendar.innerHTML += '<div></div>';
+            }
+
+            for (let i = 1; i <= lastDay.getDate(); i++) {
+                const currentDate = new Date(year, month, i);
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('calendar-day');
+                dayElement.textContent = i;
+
+                const attendanceCount = getAttendanceForDate(currentDate).length;
+                if (attendanceCount > 0) {
+                    const countElement = document.createElement('div');
+                    countElement.classList.add('attendance-count');
+                    countElement.textContent = attendanceCount;
+                    dayElement.appendChild(countElement);
+                }
+
+                if (i === eventDate.getDate()) {
+                    dayElement.classList.add('active');
+                }
+
+                if (i === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()) {
+                    dayElement.classList.add('today');
+                }
+
+                dayElement.addEventListener('click', () => {
+                    selectedDate = new Date(year, month, i);
+                    updateAttendanceTable();
+                });
+
+                calendar.appendChild(dayElement);
+            }
+        }
+
+        eventSelect.addEventListener('change', (e) => {
+            renderCalendar(e.target.value);
+            selectedDate = null;
+            updateAttendanceTable();
+        });
+
+        document.getElementById('addEventButton').addEventListener('click', () => {
+            const eventName = document.getElementById('eventName').value;
+            const eventDate = document.getElementById('eventDate').value;
+            if (eventName && eventDate) {
+                const newEvent = {
+                    id: Date.now().toString(),
+                    name: eventName,
+                    date: eventDate
+                };
+                events.push(newEvent);
+                localStorage.setItem('events', JSON.stringify(events));
+                updateEventSelect();
+                document.getElementById('eventName').value = '';
+                document.getElementById('eventDate').value = '';
+            }
+        });
+
+        function updateAttendanceTable(filter = '') {
+            const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
+            const tableBody = document.querySelector('#attendanceTable tbody');
+            tableBody.innerHTML = '';
+
+            let filteredData = attendanceData;
+
+            if (selectedDate) {
+                filteredData = filteredData.filter(student => {
+                    const checkInDate = new Date(student.checkInTime).toDateString();
+                    return checkInDate === selectedDate.toDateString();
+                });
+            } else if (eventSelect.value) {
+                const selectedEvent = events.find(e => e.id === eventSelect.value);
+                if (selectedEvent) {
+                    const eventDate = new Date(selectedEvent.date).toDateString();
+                    filteredData = filteredData.filter(student => {
+                        const checkInDate = new Date(student.checkInTime).toDateString();
+                        return checkInDate === eventDate;
+                    });
+                }
+            }
+
+            filteredData.forEach(student => {
+                if (filter === '' || student.strand === filter) {
+                    const row = tableBody.insertRow();
+                    row.insertCell().textContent = student.name;
+                    row.insertCell().textContent = student.studentId;
+                    row.insertCell().textContent = student.strand;
+                    row.insertCell().textContent = new Date(student.checkInTime).toLocaleString();
+                    row.insertCell().textContent = student.checkOutTime ? new Date(student.checkOutTime).toLocaleString() : 'Not checked out';
+                }
+            });
+        }
+
+        document.getElementById('strandFilter').addEventListener('change', function(e) {
+            updateAttendanceTable(e.target.value);
+        });
+
+        document.getElementById('refreshButton').addEventListener('click', function() {
+            updateAttendanceTable(document.getElementById('strandFilter').value);
+        });
+
+        // Initial updates
+        updateEventSelect();
+        updateAttendanceTable();
+    </script>
+</body>
+</html>
