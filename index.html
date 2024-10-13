@@ -160,6 +160,11 @@
         <tbody></tbody>
     </table>
     <script>
+        // JSONbin.io configuration
+        const API_KEY = '$2a$10$HsWzHALTL5.3.i.nF2XSc.rQ86jGG8P/wZzvb1BpZhs8C0Zo0bjUi'; // Replace with your actual API key
+        const BIN_ID = '670b2252e41b4d34e441a85f'; // Replace with your actual bin ID
+        const API_URL = `https://api.jsonbin.io/v3/b/670b2252e41b4d34e441a85f${BIN_ID}`;
+
         // Generate QR codes
         new QRCode(document.getElementById("checkInQR"), {
             text: "check-in",
@@ -171,12 +176,46 @@
             width: 200,
             height: 200
         });
+
         // Calendar functionality
         const eventSelect = document.getElementById('eventSelect');
         const calendar = document.getElementById('calendar');
-        let events = JSON.parse(localStorage.getItem('events')) || [];
+        let events = [];
         let selectedDate = null;
-        function updateEventSelect() {
+
+        async function fetchData() {
+            try {
+                const response = await fetch(API_URL, {
+                    headers: {
+                        'X-Master-Key': API_KEY
+                    }
+                });
+                const data = await response.json();
+                return data.record;
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                return { events: [], attendance: [] };
+            }
+        }
+
+        async function updateData(newData) {
+            try {
+                await fetch(API_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify(newData)
+                });
+            } catch (error) {
+                console.error('Error updating data:', error);
+            }
+        }
+
+        async function updateEventSelect() {
+            const data = await fetchData();
+            events = data.events || [];
             eventSelect.innerHTML = '<option value="">Select an event</option>';
             events.forEach(event => {
                 const option = document.createElement('option');
@@ -185,13 +224,14 @@
                 eventSelect.appendChild(option);
             });
         }
-        function getAttendanceForDate(date) {
-            const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
+
+        function getAttendanceForDate(date, attendanceData) {
             return attendanceData.filter(student => {
                 const checkInDate = new Date(student.checkInTime).toDateString();
                 return checkInDate === date.toDateString();
             });
         }
+
         function renderCalendar(eventId) {
             const event = events.find(e => e.id === eventId);
             if (!event) {
@@ -221,13 +261,6 @@
                 const dayElement = document.createElement('div');
                 dayElement.classList.add('calendar-day');
                 dayElement.textContent = i;
-                const attendanceCount = getAttendanceForDate(currentDate).length;
-                if (attendanceCount > 0) {
-                    const countElement = document.createElement('div');
-                    countElement.classList.add('attendance-count');
-                    countElement.textContent = attendanceCount;
-                    dayElement.appendChild(countElement);
-                }
                 if (i === eventDate.getDate()) {
                     dayElement.classList.add('active');
                 }
@@ -241,12 +274,14 @@
                 calendar.appendChild(dayElement);
             }
         }
+
         eventSelect.addEventListener('change', (e) => {
             renderCalendar(e.target.value);
             selectedDate = null;
             updateAttendanceTable();
         });
-        document.getElementById('addEventButton').addEventListener('click', () => {
+
+        document.getElementById('addEventButton').addEventListener('click', async () => {
             const eventName = document.getElementById('eventName').value;
             const eventDate = document.getElementById('eventDate').value;
             if (eventName && eventDate) {
@@ -255,15 +290,19 @@
                     name: eventName,
                     date: eventDate
                 };
-                events.push(newEvent);
-                localStorage.setItem('events', JSON.stringify(events));
-                updateEventSelect();
+                const data = await fetchData();
+                data.events = data.events || [];
+                data.events.push(newEvent);
+                await updateData(data);
+                await updateEventSelect();
                 document.getElementById('eventName').value = '';
                 document.getElementById('eventDate').value = '';
             }
         });
-        function updateAttendanceTable(filter = '') {
-            const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
+
+        async function updateAttendanceTable(filter = '') {
+            const data = await fetchData();
+            const attendanceData = data.attendance || [];
             const tableBody = document.querySelector('#attendanceTable tbody');
             tableBody.innerHTML = '';
             let filteredData = attendanceData;
@@ -293,14 +332,15 @@
                     const actionsCell = row.insertCell();
                     const deleteButton = document.createElement('button');
                     deleteButton.textContent = 'Delete';
-                    deleteButton.addEventListener('click', () => {
+                    deleteButton.addEventListener('click', async () => {
                         const confirmed = confirm(`Are you sure you want to delete this attendance record?`);
                         if (confirmed) {
-                            const index = attendanceData.indexOf(student);
+                            const index = attendanceData.findIndex(a => a.studentId === student.studentId && a.checkInTime === student.checkInTime);
                             if (index > -1) {
                                 attendanceData.splice(index, 1);
-                                localStorage.setItem('attendance', JSON.stringify(attendanceData));
-                                updateAttendanceTable(filter);
+                                data.attendance = attendanceData;
+                                await updateData(data);
+                                await updateAttendanceTable(filter);
                             }
                         }
                     });
@@ -308,18 +348,24 @@
                 }
             });
         }
+
         document.getElementById('strandFilter').addEventListener('change', function(e) {
             updateAttendanceTable(e.target.value);
         });
+
         document.getElementById('refreshButton').addEventListener('click', function() {
             updateAttendanceTable(document.getElementById('strandFilter').value);
         });
-        document.getElementById('deleteAllButton').addEventListener('click', () => {
+
+        document.getElementById('deleteAllButton').addEventListener('click', async () => {
             if (confirm('Are you sure you want to delete all attendance records?')) {
-                localStorage.removeItem('attendance');
-                updateAttendanceTable();
+                const data = await fetchData();
+                data.attendance = [];
+                await updateData(data);
+                await updateAttendanceTable();
             }
         });
+
         // Initial updates
         updateEventSelect();
         updateAttendanceTable();
