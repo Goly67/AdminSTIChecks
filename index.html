@@ -163,7 +163,7 @@
         // JSONbin.io configuration
         const API_KEY = '$2a$10$HsWzHALTL5.3.i.nF2XSc.rQ86jGG8P/wZzvb1BpZhs8C0Zo0bjUi'; // Replace with your actual API key
         const BIN_ID = '670b2252e41b4d34e441a85f'; // Replace with your actual bin ID
-        const API_URL = `https://api.jsonbin.io/v3/b/670b2252e41b4d34e441a85f${BIN_ID}`;
+        const API_URL = `https://api.jsonbin.io/v3/b/670b2252e41b4d34e441a85f/${BIN_ID}`; 
 
         // Generate QR codes
         new QRCode(document.getElementById("checkInQR"), {
@@ -364,8 +364,24 @@
                 await updateData(data);
                 await updateAttendanceTable();
             }
+            async function fetchData() {
+    try {
+        const response = await fetch(API_URL, {
+            headers: {
+                'X-Master-key': API_KEY
+            }
         });
+        const data = await response.json();
+        console.log('Data from API:', data); // Log the entire response
+        console.log('Attendance Data:', data.record.attendance); // Log the attendance array
+        return data.record.attendance;
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        return [];
+    }
+}
 
+        });
         // Initial updates
         updateEventSelect();
         updateAttendanceTable();
