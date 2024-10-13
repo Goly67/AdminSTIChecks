@@ -173,12 +173,8 @@
                 </select>
                 <select id="levelFilter">
                     <option value="">All Levels</option>
-                    <option value="STEM 101">STEM 101</option>
-                    <option value="STEM 102">STEM 102</option>
-                    <option value="STEM 302">STEM 302</option>
-                    <option value="STEM 303">STEM 303</option>
-                    <option value="GAS 101">GAS 101</option>
-                    <option value="ICT 101">ICT 101</option>
+                    <option value="High School">High School</option>
+                    <option value="College">College</option>
                 </select>
                 <button id="refreshButton">Refresh Data</button>
                 <button id="deleteAllButton">Delete All Attendance</button>
@@ -202,58 +198,18 @@
         </div>
     </div>
     <script>
-// Generate QR codes
-            new QRCode(document.getElementById("checkInQR"), {
-                text: "check-in",
-                width: 200,
-                height: 200
-            });
-            new QRCode(document.getElementById("checkOutQR"), {
-                text: "check-out",
-                width: 200,
-                height: 200
-            });
+        // Generate QR codes
+        new QRCode(document.getElementById("checkInQR"), {
+            text: "check-in",
+            width: 200,
+            height: 200
+        });
+        new QRCode(document.getElementById("checkOutQR"), {
+            text: "check-out",
+            width: 200,
+            height: 200
+        });
 
-            // Firebase configuration
-            const firebaseConfig = {
-                apiKey: "AIzaSyBY0j-IGGOEni1rTzcOOTOd2yQzc7aQYKM",
-                authDomain: "stilogin2024.firebaseapp.com",
-                databaseURL: "https://stilogin2024.firebaseio.com",
-                projectId: "stilogin2024",
-                storageBucket: "stilogin2024.appspot.com",
-                messagingSenderId: "780641005025",
-                appId: "1:780641005025:web:e9a2b2f9289ef7f614b6a0",
-                measurementId: "G-P06VT8KH1K"
-            };
-
-            function handleAttendanceData(data) {
-    console.log("New attendance data:", data);
-    // Your code to update attendance table
-}
-
-
-            // Initialize Firebase app
-            const app = initializeApp(firebaseConfig);
-            const database = getDatabase(app);  // Get reference to Realtime Database
-
-            // Function to handle incoming attendance data
-            function handleAttendanceData(data) {
-                const studentName = data.name;
-                const studentId = data.studentId;
-                const checkInTime = data.checkInTime;
-                const checkOutTime = data.checkOutTime; // Optional: Add checkOutTime if available
-
-                // Process and update attendance table (logic similar to your existing code)
-                // ... your code to update attendance table ...
-            }
-
-            // Listen for new attendance data in Firebase Realtime Database
-            const attendanceRef = ref(database, 'attendance');
-            onChildAdded(attendanceRef, (snapshot) => {
-                const attendanceData = snapshot.val();
-                handleAttendanceData(attendanceData);
-            });
-            
         // Calendar functionality
         const eventSelect = document.getElementById('eventSelect');
         const calendar = document.getElementById('calendar');
@@ -373,27 +329,7 @@
             }
             filteredData.forEach((student, index) => {
                 if (strandFilter === '' || student.strand === strandFilter) {
-                    // Filter by level only if "All Levels" is NOT selected
-                    if (levelFilter !== '' && student.level === levelFilter) { 
-                        const row = tableBody.insertRow();
-                        row.insertCell().textContent = student.name;
-                        row.insertCell().textContent = student.studentId;
-                        row.insertCell().textContent = student.strand;
-                        row.insertCell().textContent = student.level;
-                        row.insertCell().textContent = new Date(student.checkInTime).toLocaleString();
-                        row.insertCell().textContent = student.checkOutTime ? new Date(student.checkOutTime).toLocaleString() : 'Not checked out';
-                        const actionCell = row.insertCell();
-                        const deleteButton = document.createElement('button');
-                        deleteButton.textContent = 'Delete';
-                        deleteButton.addEventListener('click', () => {
-                            if (confirm(`Are you sure you want to delete ${student.name}'s attendance record?`)) {
-                                attendanceData.splice(index, 1);
-                                localStorage.setItem('attendance', JSON.stringify(attendanceData));
-                                updateAttendanceTable(strandFilter, levelFilter);
-                            }
-                        });
-                        actionCell.appendChild(deleteButton);
-                    } else if (levelFilter === '') { // Show all levels if "All Levels" is selected
+                    if (levelFilter === '' || student.level === levelFilter) {
                         const row = tableBody.insertRow();
                         row.insertCell().textContent = student.name;
                         row.insertCell().textContent = student.studentId;
@@ -435,11 +371,10 @@
                 updateAttendanceTable();
             }
         });
-        
+
         // Initial updates
         updateEventSelect();
         updateAttendanceTable();
-        
     </script>
 </body>
 </html>
