@@ -165,6 +165,18 @@
         const BIN_ID = '670b2252e41b4d34e441a85f'; // Replace with your actual bin ID
         const API_URL = `https://api.jsonbin.io/v3/b/670b2252e41b4d34e441a85f/${BIN_ID}`; 
 
+        fetch(API_URL, {
+    headers: {
+        'X-Master-Key': API_KEY
+    }
+})
+.then(response => response.json()) // Parse the response as JSON
+.then(data => {
+    console.log('Data:', data); // Log the retrieved data
+    // Update the UI with the data here
+})
+        
+        
         // Generate QR codes
         new QRCode(document.getElementById("checkInQR"), {
             text: "check-in",
