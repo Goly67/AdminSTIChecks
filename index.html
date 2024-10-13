@@ -204,17 +204,20 @@
     <script>
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
-        // Generate QR codes
-        new QRCode(document.getElementById("checkInQR"), {
-            text: "check-in",
-            width: 200,
-            height: 200
-        });
-        new QRCode(document.getElementById("checkOutQR"), {
-            text: "check-out",
-            width: 200,
-            height: 200
-        });
+        
+        window.onload = function() {
+    new QRCode(document.getElementById("checkInQR"), {
+        text: "check-in",
+        width: 200,
+        height: 200
+    });
+    
+    new QRCode(document.getElementById("checkOutQR"), {
+        text: "check-out",
+        width: 200,
+        height: 200
+    });
+};
 
         // Calendar functionality
         const eventSelect = document.getElementById('eventSelect');
