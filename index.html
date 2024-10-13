@@ -226,6 +226,12 @@
                 measurementId: "G-P06VT8KH1K"
             };
 
+            function handleAttendanceData(data) {
+    console.log("New attendance data:", data);
+    // Your code to update attendance table
+}
+
+
             // Initialize Firebase app
             const app = initializeApp(firebaseConfig);
             const database = getDatabase(app);  // Get reference to Realtime Database
