@@ -395,16 +395,19 @@
                 updateAttendanceTable();
             }
         });
-        // Get a reference to the attendance data
-const dbRef = firebase.database().ref('attendance'); // Replace with your Firebase database reference
+const firebaseConfig = {
+    apiKey: "AIzaSyBY0j-IGGOEni1rTzcOOTOd2yQzc7aQYKM",
+    authDomain: "stilogin2024.firebaseapp.com",
+    databaseURL: "https://stilogin2024.firebaseio.com", // Add this line
+    projectId: "stilogin2024",
+    storageBucket: "stilogin2024.appspot.com",
+    messagingSenderId: "780641005025",
+    appId: "1:780641005025:web:e9a2b2f9289ef7f614b6a0",
+    measurementId: "G-P06VT8KH1K"
+};
 
-// Listen for changes to the attendance data
-dbRef.on('child_added', function(snapshot) {
-    const attendanceData = snapshot.val();
-    // Update the admin page's attendance list with the new data
-    updateAttendanceTable(attendanceData); // Assuming you have a function to update the table
-});
-
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
 
         // Initial updates
         updateEventSelect();
