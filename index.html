@@ -395,10 +395,21 @@
                 updateAttendanceTable();
             }
         });
+        // Get a reference to the attendance data
+const dbRef = firebase.database().ref('attendance'); // Replace with your Firebase database reference
+
+// Listen for changes to the attendance data
+dbRef.on('child_added', function(snapshot) {
+    const attendanceData = snapshot.val();
+    // Update the admin page's attendance list with the new data
+    updateAttendanceTable(attendanceData); // Assuming you have a function to update the table
+});
+
 
         // Initial updates
         updateEventSelect();
         updateAttendanceTable();
+        
     </script>
 </body>
 </html>
