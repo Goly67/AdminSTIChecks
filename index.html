@@ -9,10 +9,10 @@
         :root {
             --primary-color: #4a90e2;
             --secondary-color: #f39c12;
-            --background-color: #f5f7fa;
-            --text-color: #333;
-            --card-background: #ffffff;
-            --border-color: #e0e0e0;
+            --background-color: #222; /* Dark background */
+            --text-color: #fff; /* Light text */
+            --card-background: #333; /* Dark card background */
+            --border-color: #555; /* Dark border */
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -35,7 +35,7 @@
         .card {
             background-color: var(--card-background);
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5); /* Darker shadow */
             padding: 20px;
             margin-bottom: 20px;
         }
@@ -111,7 +111,7 @@
             color: white;
         }
         tr:nth-child(even) {
-            background-color: #f2f2f2;
+            background-color: #3f3f3f; /* Darker gray for even rows */
         }
         select, button, input {
             margin: 10px 5px;
@@ -119,6 +119,8 @@
             font-size: 16px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
+            background-color: #444; /* Dark input background */
+            color: var(--text-color);
         }
         button {
             background-color: var(--primary-color);
@@ -209,13 +211,11 @@
             width: 200,
             height: 200
         });
-
         // Calendar functionality
         const eventSelect = document.getElementById('eventSelect');
         const calendar = document.getElementById('calendar');
         let events = JSON.parse(localStorage.getItem('events')) || [];
         let selectedDate = null;
-
         function updateEventSelect() {
             eventSelect.innerHTML = '<option value="">Select an event</option>';
             events.forEach(event => {
@@ -225,7 +225,6 @@
                 eventSelect.appendChild(option);
             });
         }
-
         function getAttendanceForDate(date) {
             const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
             return attendanceData.filter(student => {
@@ -233,7 +232,6 @@
                 return checkInDate === date.toDateString();
             });
         }
-
         function renderCalendar(eventId) {
             const event = events.find(e => e.id === eventId);
             if (!event) {
@@ -283,13 +281,11 @@
                 calendar.appendChild(dayElement);
             }
         }
-
         eventSelect.addEventListener('change', (e) => {
             renderCalendar(e.target.value);
             selectedDate = null;
             updateAttendanceTable();
         });
-
         document.getElementById('addEventButton').addEventListener('click', () => {
             const eventName = document.getElementById('eventName').value;
             const eventDate = document.getElementById('eventDate').value;
@@ -306,7 +302,6 @@
                 document.getElementById('eventDate').value = '';
             }
         });
-
         function updateAttendanceTable(strandFilter = '', levelFilter = '') {
             const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
             const tableBody = document.querySelector('#attendanceTable tbody');
@@ -352,26 +347,21 @@
                 }
             });
         }
-
         document.getElementById('strandFilter').addEventListener('change', function(e) {
             updateAttendanceTable(e.target.value, document.getElementById('levelFilter').value);
         });
-
         document.getElementById('levelFilter').addEventListener('change', function(e) {
             updateAttendanceTable(document.getElementById('strandFilter').value, e.target.value);
         });
-
         document.getElementById('refreshButton').addEventListener('click', function() {
             updateAttendanceTable(document.getElementById('strandFilter').value, document.getElementById('levelFilter').value);
         });
-
         document.getElementById('deleteAllButton').addEventListener('click', () => {
             if (confirm('Are you sure you want to delete ALL attendance records?')) {
                 localStorage.setItem('attendance', JSON.stringify([]));
                 updateAttendanceTable();
             }
         });
-
         // Initial updates
         updateEventSelect();
         updateAttendanceTable();
