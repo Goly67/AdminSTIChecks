@@ -202,18 +202,52 @@
         </div>
     </div>
     <script>
-        // Generate QR codes
-        new QRCode(document.getElementById("checkInQR"), {
-            text: "check-in",
-            width: 200,
-            height: 200
-        });
-        new QRCode(document.getElementById("checkOutQR"), {
-            text: "check-out",
-            width: 200,
-            height: 200
-        });
+// Generate QR codes
+            new QRCode(document.getElementById("checkInQR"), {
+                text: "check-in",
+                width: 200,
+                height: 200
+            });
+            new QRCode(document.getElementById("checkOutQR"), {
+                text: "check-out",
+                width: 200,
+                height: 200
+            });
 
+            // Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyBY0j-IGGOEni1rTzcOOTOd2yQzc7aQYKM",
+                authDomain: "stilogin2024.firebaseapp.com",
+                databaseURL: "https://stilogin2024.firebaseio.com",
+                projectId: "stilogin2024",
+                storageBucket: "stilogin2024.appspot.com",
+                messagingSenderId: "780641005025",
+                appId: "1:780641005025:web:e9a2b2f9289ef7f614b6a0",
+                measurementId: "G-P06VT8KH1K"
+            };
+
+            // Initialize Firebase app
+            const app = initializeApp(firebaseConfig);
+            const database = getDatabase(app);  // Get reference to Realtime Database
+
+            // Function to handle incoming attendance data
+            function handleAttendanceData(data) {
+                const studentName = data.name;
+                const studentId = data.studentId;
+                const checkInTime = data.checkInTime;
+                const checkOutTime = data.checkOutTime; // Optional: Add checkOutTime if available
+
+                // Process and update attendance table (logic similar to your existing code)
+                // ... your code to update attendance table ...
+            }
+
+            // Listen for new attendance data in Firebase Realtime Database
+            const attendanceRef = ref(database, 'attendance');
+            onChildAdded(attendanceRef, (snapshot) => {
+                const attendanceData = snapshot.val();
+                handleAttendanceData(attendanceData);
+            });
+            
         // Calendar functionality
         const eventSelect = document.getElementById('eventSelect');
         const calendar = document.getElementById('calendar');
@@ -395,20 +429,7 @@
                 updateAttendanceTable();
             }
         });
-const firebaseConfig = {
-    apiKey: "AIzaSyBY0j-IGGOEni1rTzcOOTOd2yQzc7aQYKM",
-    authDomain: "stilogin2024.firebaseapp.com",
-    databaseURL: "https://stilogin2024.firebaseio.com", // Add this line
-    projectId: "stilogin2024",
-    storageBucket: "stilogin2024.appspot.com",
-    messagingSenderId: "780641005025",
-    appId: "1:780641005025:web:e9a2b2f9289ef7f614b6a0",
-    measurementId: "G-P06VT8KH1K"
-};
-
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-
+        
         // Initial updates
         updateEventSelect();
         updateAttendanceTable();
