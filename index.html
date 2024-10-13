@@ -444,6 +444,47 @@ const firebaseConfig = {
             }
         });
 
+        const firebaseConfig = {
+    apiKey: "AIzaSyBY0j-IGGOEni1rTzcOOTOd2yQzc7aQYKM",
+    authDomain: "stilogin2024.firebaseapp.com",
+    databaseURL: "https://stilogin2024.firebaseio.com",
+    projectId: "stilogin2024",
+    storageBucket: "stilogin2024.appspot.com",
+    messagingSenderId: "780641005025",
+    appId: "1:780641005025:web:e9a2b2f9289ef7f614b6a0",
+    measurementId: "G-P06VT8KH1K"
+};
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+const attendanceRef = ref(database, 'attendance');
+
+// Update attendance table
+onValue(attendanceRef, (snapshot) => {
+    const attendanceData = snapshot.val();
+    const tableBody = document.querySelector('#attendanceTable tbody');
+    tableBody.innerHTML = ''; // Clear existing table content
+
+    // Iterate through attendance data and create table rows
+    for (const studentId in attendanceData) {
+        const student = attendanceData[studentId];
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = student.name;
+        row.insertCell().textContent = student.studentId;
+        row.insertCell().textContent = student.strand;
+        row.insertCell().textContent = student.level;
+        row.insertCell().textContent = new Date(student.checkInTime).toLocaleString();
+        row.insertCell().textContent = student.checkOutTime ? new Date(student.checkOutTime).toLocaleString() : 'Not checked out';
+
+        // Create delete button
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', () => {
+            remove(child(attendanceRef, studentId)); // Delete from Firebase
+        });
+        row.insertCell().appendChild(deleteButton);
+    }
+});
+
         // Initial updates
         updateEventSelect();
         updateAttendanceTable();
