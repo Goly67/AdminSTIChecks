@@ -350,53 +350,64 @@
             }
         });
         async function updateAttendanceTable(strandFilter = '', levelFilter = '') {
-            try {
-                const response = await fetch('https://sti-attendance-api.glitch.me/attendance');
-                const attendanceData = await response.json();
+    try {
+        const response = await fetch('https://sti-attendance-api.glitch.me/attendance');
+        
+        // Log raw response text for debugging
+        const text = await response.text();
+        console.log(text); // This will show the raw response, e.g., HTML error page
+        
+        // Check if response is valid JSON
+        if (response.ok) {
+            const attendanceData = JSON.parse(text);  // Try parsing the text as JSON
+            const tableBody = document.querySelector('#attendanceTable tbody');
+            tableBody.innerHTML = '';
 
-                const tableBody = document.querySelector('#attendanceTable tbody');
-                tableBody.innerHTML = '';
+            // Filter the attendanceData based on strand and level
+            const filteredData = attendanceData.filter(student => {
+                return (strandFilter === '' || student.strand === strandFilter) &&
+                    (levelFilter === '' || student.level === levelFilter);
+            });
 
-                // Filter the attendanceData based on strand and level
-                const filteredData = attendanceData.filter(student => {
-                    return (strandFilter === '' || student.strand === strandFilter) &&
-                        (levelFilter === '' || student.level === levelFilter);
-                });
+            filteredData.forEach(student => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = student.name;
+                row.insertCell().textContent = student.studentId;
+                row.insertCell().textContent = student.strand;
+                row.insertCell().textContent = student.level;
+                row.insertCell().textContent = new Date(student.checkInTime).toLocaleString();
+                row.insertCell().textContent = student.checkOutTime ? new Date(student.checkOutTime).toLocaleString() : 'Not checked out';
 
-                filteredData.forEach(student => {
-                    const row = tableBody.insertRow();
-                    row.insertCell().textContent = student.name;
-                    row.insertCell().textContent = student.studentId;
-                    row.insertCell().textContent = student.strand;
-                    row.insertCell().textContent = student.level;
-                    row.insertCell().textContent = new Date(student.checkInTime).toLocaleString();
-                    row.insertCell().textContent = student.checkOutTime ? new Date(student.checkOutTime).toLocaleString() : 'Not checked out';
-
-                    const actionCell = row.insertCell();
-                    const deleteButton = document.createElement('button');
-                    deleteButton.textContent = 'Delete';
-                    deleteButton.addEventListener('click', async () => {
-                        if (confirm(`Are you sure you want to delete ${student.name}'s attendance record?`)) {
-                            try {
-                                const deleteResponse = await fetch(`https://sti-attendance-api.glitch.me/attendance/${student.id}`, {
-                                    method: 'DELETE'
-                                });
-                                if (deleteResponse.ok) {
-                                    updateAttendanceTable(strandFilter, levelFilter);  // Refresh the table after deletion
-                                } else {
-                                    throw new Error('Failed to delete record.');
-                                }
-                            } catch (error) {
-                                console.error('Error deleting record:', error);
+                const actionCell = row.insertCell();
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.addEventListener('click', async () => {
+                    if (confirm(`Are you sure you want to delete ${student.name}'s attendance record?`)) {
+                        try {
+                            const deleteResponse = await fetch(`https://sti-attendance-api.glitch.me/attendance/${student.id}`, {
+                                method: 'DELETE'
+                            });
+                            if (deleteResponse.ok) {
+                                updateAttendanceTable(strandFilter, levelFilter);  // Refresh the table after deletion
+                            } else {
+                                throw new Error('Failed to delete record.');
                             }
+                        } catch (error) {
+                            console.error('Error deleting record:', error);
                         }
-                    });
-                    actionCell.appendChild(deleteButton);
+                    }
                 });
-            } catch (error) {
-                console.error('Error updating attendance table:', error);
-            }
+                actionCell.appendChild(deleteButton);
+            });
+        } else {
+            // If response isn't OK, log the error and handle accordingly
+            throw new Error('Failed to fetch attendance data');
         }
+    } catch (error) {
+        console.error('Error updating attendance table:', error);
+        alert('Failed to load or update attendance data.');
+    }
+}
         document.getElementById('strandFilter').addEventListener('change', function (e) {
             updateAttendanceTable(e.target.value, document.getElementById('levelFilter').value);
         });
