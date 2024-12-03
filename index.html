@@ -230,13 +230,20 @@
                 eventSelect.appendChild(option);
             });
         }
-        function getAttendanceForDate(date) {
-            const attendanceData = JSON.parse(localStorage.getItem('attendance')) || [];
-            return attendanceData.filter(student => {
-                const checkInDate = new Date(student.checkInTime).toDateString();
-                return checkInDate === date.toDateString();
-            });
-        }
+        async function getAttendanceForDate(date) {
+    try {
+        const response = await fetch('https://sti-attendance-api.glitch.me/attendance');
+        const attendanceData = await response.json();
+
+        return attendanceData.filter(student => {
+            const checkInDate = new Date(student.checkInTime).toDateString();
+            return checkInDate === date.toDateString();
+        });
+    } catch (error) {
+        console.error('Error fetching attendance:', error);
+        return [];
+    }
+}
         function renderCalendar(eventId) {
             const event = events.find(e => e.id === eventId);
             if (!event) {
