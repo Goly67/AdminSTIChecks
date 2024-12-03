@@ -323,43 +323,47 @@
         const tableBody = document.querySelector('#attendanceTable tbody');
         tableBody.innerHTML = '';
 
-        attendanceData.forEach(student => {
-            if ((strandFilter === '' || student.strand === strandFilter) &&
-                (levelFilter === '' || student.level === levelFilter)) {
-                const row = tableBody.insertRow();
-                row.insertCell().textContent = student.name;
-                row.insertCell().textContent = student.studentId;
-                row.insertCell().textContent = student.strand;
-                row.insertCell().textContent = student.level;
-                row.insertCell().textContent = new Date(student.checkInTime).toLocaleString();
-                row.insertCell().textContent = student.checkOutTime ? new Date(student.checkOutTime).toLocaleString() : 'Not checked out';
-                
-                const actionCell = row.insertCell();
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Delete';
-                deleteButton.addEventListener('click', async () => {
-                    if (confirm(`Are you sure you want to delete ${student.name}'s attendance record?`)) {
-                        try {
-                            const deleteResponse = await fetch(`https://sti-attendance-api.glitch.me/attendance/${student.id}`, {
-                                method: 'DELETE'
-                            });
-                            if (deleteResponse.ok) {
-                                updateAttendanceTable(strandFilter, levelFilter);
-                            } else {
-                                throw new Error('Failed to delete record.');
-                            }
-                        } catch (error) {
-                            console.error('Error deleting record:', error);
+        // Filter the attendanceData based on strand and level
+        const filteredData = attendanceData.filter(student => {
+            return (strandFilter === '' || student.strand === strandFilter) &&
+                   (levelFilter === '' || student.level === levelFilter);
+        });
+
+        filteredData.forEach(student => {
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = student.name;
+            row.insertCell().textContent = student.studentId;
+            row.insertCell().textContent = student.strand;
+            row.insertCell().textContent = student.level;
+            row.insertCell().textContent = new Date(student.checkInTime).toLocaleString();
+            row.insertCell().textContent = student.checkOutTime ? new Date(student.checkOutTime).toLocaleString() : 'Not checked out';
+            
+            const actionCell = row.insertCell();
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', async () => {
+                if (confirm(`Are you sure you want to delete ${student.name}'s attendance record?`)) {
+                    try {
+                        const deleteResponse = await fetch(`https://sti-attendance-api.glitch.me/attendance/${student.id}`, {
+                            method: 'DELETE'
+                        });
+                        if (deleteResponse.ok) {
+                            updateAttendanceTable(strandFilter, levelFilter);  // Refresh the table after deletion
+                        } else {
+                            throw new Error('Failed to delete record.');
                         }
+                    } catch (error) {
+                        console.error('Error deleting record:', error);
                     }
-                });
-                actionCell.appendChild(deleteButton);
-            }
+                }
+            });
+            actionCell.appendChild(deleteButton);
         });
     } catch (error) {
         console.error('Error updating attendance table:', error);
     }
 }
+        }
             filteredData.forEach((student, index) => {
                 if (strandFilter === '' || student.strand === strandFilter) {
                     if (levelFilter === '' || student.level === levelFilter) {
