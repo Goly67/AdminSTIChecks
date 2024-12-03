@@ -386,6 +386,11 @@
                         const deleteButton = document.createElement('button');
                         deleteButton.textContent = 'Delete';
                         deleteButton.addEventListener('click', async () => {
+                            if (!student.id) {
+                                alert('Error: Student ID is undefined.');
+                                return;
+                            }
+
                             if (confirm(`Are you sure you want to delete ${student.name}'s attendance record?`)) {
                                 try {
                                     const deleteResponse = await fetch(`https://sti-attendance-api.glitch.me/attendance/${student.id}`, {
@@ -401,6 +406,7 @@
                                 }
                             }
                         });
+
                         actionCell.appendChild(deleteButton);
                     });
                 } else {
