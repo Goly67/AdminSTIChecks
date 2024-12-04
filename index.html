@@ -399,24 +399,24 @@ async function updateAttendanceTable(strandFilter = "", levelFilter = "") {
             const deleteButton = document.createElement("button");
             deleteButton.textContent = "Delete";
             deleteButton.addEventListener("click", async () => {
-                if (student.studentId) {
-                    try {
-                        const deleteResponse = await fetch(
-                            `https://sti-attendance-api.glitch.me/attendance/${student.studentId}`,
-                            {
-                                method: "DELETE",
-                            }
-                        );
-                        if (deleteResponse.ok) {
-                            updateAttendanceTable(strandFilter, levelFilter);
-                        } else {
-                            console.error("Failed to delete record.");
-                        }
-                    } catch (error) {
-                        console.error("Error deleting record:", error);
-                    }
+    if (confirm(`Are you sure you want to delete attendance for ${student.name}?`)) {
+        try {
+            const deleteResponse = await fetch(
+                `https://sti-attendance-api.glitch.me/attendance/${student.studentId}`,
+                {
+                    method: "DELETE",
                 }
-            });
+            );
+            if (deleteResponse.ok) {
+                updateAttendanceTable();
+            } else {
+                alert("Failed to delete record. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error deleting record:", error);
+        }
+    }
+});
             actionCell.appendChild(deleteButton);
         });
     } catch (error) {
@@ -451,14 +451,13 @@ document
         );
     });
 
-document
-    .getElementById("deleteAllButton")
-    .addEventListener("click", () => {
-        if (confirm("Are you sure you want to delete ALL attendance records?")) {
-            localStorage.setItem("attendance", JSON.stringify([]));
-            updateAttendanceTable();
-        }
-    });
+document.getElementById("deleteAllButton").addEventListener("click", () => {
+    if (confirm("Are you sure you want to delete ALL attendance records?")) {
+        console.warn("Delete All Attendance triggered. Data will remain in the API.");
+        updateAttendanceTable();
+    }
+});
+
 
 // Initial updates
 updateEventSelect();
