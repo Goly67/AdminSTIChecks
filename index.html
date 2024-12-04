@@ -241,197 +241,229 @@
     </div>
     <script>
         // Generate QR codes
-        new QRCode(document.getElementById("checkInQR"), {
-            text: "check-in",
-            width: 200,
-            height: 200
-        });
-        new QRCode(document.getElementById("checkOutQR"), {
-            text: "check-out",
-            width: 200,
-            height: 200
-        });
-        // Calendar functionality
-        const eventSelect = document.getElementById('eventSelect');
-        const calendar = document.getElementById('calendar');
-        let events = JSON.parse(localStorage.getItem('events')) || [];
-        let selectedDate = null;
-        function updateEventSelect() {
-            eventSelect.innerHTML = '<option value="">Select an event</option>';
-            events.forEach(event => {
-                const option = document.createElement('option');
-                option.value = event.id;
-                option.textContent = `${event.name} (${event.date})`;
-                eventSelect.appendChild(option);
-            });
-        }
-        async function getAttendanceForDate(date) {
-            try {
-                const response = await fetch('https://sti-attendance-api.glitch.me/attendance');
-                const attendanceData = await response.json();
+new QRCode(document.getElementById("checkInQR"), {
+    text: "check-in",
+    width: 200,
+    height: 200,
+});
+new QRCode(document.getElementById("checkOutQR"), {
+    text: "check-out",
+    width: 200,
+    height: 200,
+});
 
-                return attendanceData.filter(student => {
-                    const checkInDate = new Date(student.checkInTime).toDateString();
-                    return checkInDate === date.toDateString();
-                });
-            } catch (error) {
-                console.error('Error fetching attendance:', error);
-                return [];
-            }
+// Calendar functionality
+const eventSelect = document.getElementById("eventSelect");
+const calendar = document.getElementById("calendar");
+let events = JSON.parse(localStorage.getItem("events")) || [];
+let selectedDate = null;
+
+function updateEventSelect() {
+    eventSelect.innerHTML = '<option value="">Select an event</option>';
+    events.forEach((event) => {
+        const option = document.createElement("option");
+        option.value = event.id;
+        option.textContent = `${event.name} (${event.date})`;
+        eventSelect.appendChild(option);
+    });
+}
+
+async function getAttendanceForDate(date) {
+    try {
+        const response = await fetch(
+            "https://sti-attendance-api.glitch.me/attendance"
+        );
+        const attendanceData = await response.json();
+        return attendanceData.filter((student) => {
+            const checkInDate = new Date(student.checkInTime).toDateString();
+            return checkInDate === date.toDateString();
+        });
+    } catch (error) {
+        console.error("Error fetching attendance:", error);
+        return [];
+    }
+}
+
+function renderCalendar(eventId) {
+    const event = events.find((e) => e.id === eventId);
+    if (!event) {
+        calendar.innerHTML = "<p>Please select an event</p>";
+        return;
+    }
+
+    const eventDate = new Date(event.date);
+    const year = eventDate.getFullYear();
+    const month = eventDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+
+    calendar.innerHTML = `
+        <div class="calendar-header">${eventDate.toLocaleString("default", {
+            month: "long",
+        })} ${year}</div>
+        <div class="calendar-day">Sun</div>
+        <div class="calendar-day">Mon</div>
+        <div class="calendar-day">Tue</div>
+        <div class="calendar-day">Wed</div>
+        <div class="calendar-day">Thu</div>
+        <div class="calendar-day">Fri</div>
+        <div class="calendar-day">Sat</div>
+    `;
+
+    for (let i = 0; i < firstDay.getDay(); i++) {
+        calendar.innerHTML += "<div></div>";
+    }
+
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+        const currentDate = new Date(year, month, i);
+        const dayElement = document.createElement("div");
+        dayElement.classList.add("calendar-day");
+        dayElement.textContent = i;
+
+        if (i === eventDate.getDate()) {
+            dayElement.classList.add("active");
         }
-        function renderCalendar(eventId) {
-            const event = events.find(e => e.id === eventId);
-            if (!event) {
-                calendar.innerHTML = '<p>Please select an event</p>';
-                return;
-            }
-            const eventDate = new Date(event.date);
-            const year = eventDate.getFullYear();
-            const month = eventDate.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            calendar.innerHTML = `
-                <div class="calendar-header">${eventDate.toLocaleString('default', { month: 'long' })} ${year}</div>
-                <div class="calendar-day">Sun</div>
-                <div class="calendar-day">Mon</div>
-                <div class="calendar-day">Tue</div>
-                <div class="calendar-day">Wed</div>
-                <div class="calendar-day">Thu</div>
-                <div class="calendar-day">Fri</div>
-                <div class="calendar-day">Sat</div>
-            `;
-            for (let i = 0; i < firstDay.getDay(); i++) {
-                calendar.innerHTML += '<div></div>';
-            }
-            for (let i = 1; i <= lastDay.getDate(); i++) {
-                const currentDate = new Date(year, month, i);
-                const dayElement = document.createElement('div');
-                dayElement.classList.add('calendar-day');
-                dayElement.textContent = i;
-                const attendanceCount = getAttendanceForDate(currentDate).length;
-                if (attendanceCount > 0) {
-                    const countElement = document.createElement('div');
-                    countElement.classList.add('attendance-count');
-                    countElement.textContent = attendanceCount;
-                    dayElement.appendChild(countElement);
-                }
-                if (i === eventDate.getDate()) {
-                    dayElement.classList.add('active');
-                }
-                if (i === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear()) {
-                    dayElement.classList.add('today');
-                }
-                dayElement.addEventListener('click', () => {
-                    selectedDate = new Date(year, month, i);
-                    updateAttendanceTable();
-                });
-                calendar.appendChild(dayElement);
-            }
+        if (
+            i === new Date().getDate() &&
+            month === new Date().getMonth() &&
+            year === new Date().getFullYear()
+        ) {
+            dayElement.classList.add("today");
         }
-        eventSelect.addEventListener('change', (e) => {
-            renderCalendar(e.target.value);
-            selectedDate = null;
+
+        dayElement.addEventListener("click", () => {
+            selectedDate = currentDate;
             updateAttendanceTable();
         });
-        document.getElementById('addEventButton').addEventListener('click', () => {
-            const eventName = document.getElementById('eventName').value;
-            const eventDate = document.getElementById('eventDate').value;
-            if (eventName && eventDate) {
-                const newEvent = {
-                    id: Date.now().toString(),
-                    name: eventName,
-                    date: eventDate
-                };
-                events.push(newEvent);
-                localStorage.setItem('events', JSON.stringify(events));
-                updateEventSelect();
-                document.getElementById('eventName').value = '';
-                document.getElementById('eventDate').value = '';
 
-                // Refresh the attendance table when a new event is added
-                updateAttendanceTable();
-            }
-        });
+        calendar.appendChild(dayElement);
+    }
+}
 
-        // Auto-refresh attendance data every 5 minutes (300000ms)
+eventSelect.addEventListener("change", (e) => {
+    renderCalendar(e.target.value);
+    selectedDate = null;
+    updateAttendanceTable();
+});
+
+document.getElementById("addEventButton").addEventListener("click", () => {
+    const eventName = document.getElementById("eventName").value;
+    const eventDate = document.getElementById("eventDate").value;
+    if (eventName && eventDate) {
+        const newEvent = {
+            id: Date.now().toString(),
+            name: eventName,
+            date: eventDate,
+        };
+        events.push(newEvent);
+        localStorage.setItem("events", JSON.stringify(events));
+        updateEventSelect();
+        document.getElementById("eventName").value = "";
+        document.getElementById("eventDate").value = "";
+    }
+});
+
+// Auto-refresh attendance data every 5 minutes
 setInterval(updateAttendanceTable, 300000);
 
-async function updateAttendanceTable(strandFilter = '', levelFilter = '') {
+async function updateAttendanceTable(strandFilter = "", levelFilter = "") {
     try {
-        const response = await fetch('https://sti-attendance-api.glitch.me/attendance');
+        const response = await fetch(
+            "https://sti-attendance-api.glitch.me/attendance"
+        );
         const attendanceData = await response.json();
+        const tableBody = document.querySelector("#attendanceTable tbody");
+        tableBody.innerHTML = "";
 
-        const tableBody = document.querySelector('#attendanceTable tbody');
-        tableBody.innerHTML = '';
-
-        // Store attendance data in localStorage to prevent data loss after page reload
-        localStorage.setItem('attendanceData', JSON.stringify(attendanceData));
-
-        // Filter the attendanceData based on strand and level
-        const filteredData = attendanceData.filter(student => {
-            return (strandFilter === '' || student.strand === strandFilter) &&
-                (levelFilter === '' || student.level === levelFilter);
+        const filteredData = attendanceData.filter((student) => {
+            return (
+                (strandFilter === "" || student.strand === strandFilter) &&
+                (levelFilter === "" || student.level === levelFilter)
+            );
         });
 
-        filteredData.forEach(student => {
+        filteredData.forEach((student) => {
             const row = tableBody.insertRow();
             row.insertCell().textContent = student.name;
-            row.insertCell().textContent = student.studentId || 'No ID'; // Handle missing studentId
+            row.insertCell().textContent = student.studentId || "No ID";
             row.insertCell().textContent = student.strand;
             row.insertCell().textContent = student.level;
-            row.insertCell().textContent = new Date(student.checkInTime).toLocaleString();
-            row.insertCell().textContent = student.checkOutTime ? new Date(student.checkOutTime).toLocaleString() : 'Not checked out';
+            row.insertCell().textContent = new Date(
+                student.checkInTime
+            ).toLocaleString();
+            row.insertCell().textContent = student.checkOutTime
+                ? new Date(student.checkOutTime).toLocaleString()
+                : "Not checked out";
 
             const actionCell = row.insertCell();
-            const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Delete';
-
-            // Add a check for undefined `id`
-            if (!student.studentId) {
-    alert('Error: Student ID is undefined.');
-    return;
-}
-try {
-    const deleteResponse = await fetch(`https://sti-attendance-api.glitch.me/attendance/${student.studentId}`, {
-        method: 'DELETE'
-    });
-    if (deleteResponse.ok) {
-        updateAttendanceTable(strandFilter, levelFilter);
-    } else {
-        throw new Error('Failed to delete record.');
-    }
-} catch (error) {
-    console.error('Error deleting record:', error);
-}
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Delete";
+            deleteButton.addEventListener("click", async () => {
+                if (student.studentId) {
+                    try {
+                        const deleteResponse = await fetch(
+                            `https://sti-attendance-api.glitch.me/attendance/${student.studentId}`,
+                            {
+                                method: "DELETE",
+                            }
+                        );
+                        if (deleteResponse.ok) {
+                            updateAttendanceTable(strandFilter, levelFilter);
+                        } else {
+                            console.error("Failed to delete record.");
+                        }
+                    } catch (error) {
+                        console.error("Error deleting record:", error);
                     }
-                });
-            }
-
+                }
+            });
             actionCell.appendChild(deleteButton);
         });
     } catch (error) {
-        console.error('Error updating attendance table:', error);
-        alert('Failed to load or update attendance data.');
+        console.error("Error updating attendance table:", error);
     }
 }
-        document.getElementById('strandFilter').addEventListener('change', function (e) {
-            updateAttendanceTable(e.target.value, document.getElementById('levelFilter').value);
-        });
-        document.getElementById('levelFilter').addEventListener('change', function (e) {
-            updateAttendanceTable(document.getElementById('strandFilter').value, e.target.value);
-        });
-        document.getElementById('refreshButton').addEventListener('click', function () {
-            updateAttendanceTable(document.getElementById('strandFilter').value, document.getElementById('levelFilter').value);
-        });
-        document.getElementById('deleteAllButton').addEventListener('click', () => {
-            if (confirm('Are you sure you want to delete ALL attendance records?')) {
-                localStorage.setItem('attendance', JSON.stringify([]));
-                updateAttendanceTable();
-            }
-        });
-        // Initial updates
-        updateEventSelect();
-        updateAttendanceTable();
+
+document
+    .getElementById("strandFilter")
+    .addEventListener("change", function (e) {
+        updateAttendanceTable(
+            e.target.value,
+            document.getElementById("levelFilter").value
+        );
+    });
+
+document
+    .getElementById("levelFilter")
+    .addEventListener("change", function (e) {
+        updateAttendanceTable(
+            document.getElementById("strandFilter").value,
+            e.target.value
+        );
+    });
+
+document
+    .getElementById("refreshButton")
+    .addEventListener("click", function () {
+        updateAttendanceTable(
+            document.getElementById("strandFilter").value,
+            document.getElementById("levelFilter").value
+        );
+    });
+
+document
+    .getElementById("deleteAllButton")
+    .addEventListener("click", () => {
+        if (confirm("Are you sure you want to delete ALL attendance records?")) {
+            localStorage.setItem("attendance", JSON.stringify([]));
+            updateAttendanceTable();
+        }
+    });
+
+// Initial updates
+updateEventSelect();
+updateAttendanceTable();
+
     </script>
 </body>
 
