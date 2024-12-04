@@ -385,27 +385,30 @@ async function updateAttendanceTable(strandFilter = '', levelFilter = '') {
             const actionCell = row.insertCell();
             const deleteButton = document.createElement('button');
             deleteButton.textContent = 'Delete';
-            deleteButton.addEventListener('click', async () => {
-                if (!student.id) {
-                    alert('Error: Student ID is undefined.');
-                    return;
-                }
 
-                if (confirm(`Are you sure you want to delete ${student.name}'s attendance record?`)) {
-                    try {
-                        const deleteResponse = await fetch(`https://sti-attendance-api.glitch.me/attendance/${student.id}`, {
-                            method: 'DELETE'
-                        });
-                        if (deleteResponse.ok) {
-                            updateAttendanceTable(strandFilter, levelFilter);  // Refresh the table after deletion
-                        } else {
-                            throw new Error('Failed to delete record.');
+            // Add a check for undefined `id`
+            if (!student.id) {
+                console.warn(`Missing ID for student: ${JSON.stringify(student)}`);
+                deleteButton.disabled = true;
+                deleteButton.title = "Cannot delete record without a valid ID.";
+            } else {
+                deleteButton.addEventListener('click', async () => {
+                    if (confirm(`Are you sure you want to delete ${student.name}'s attendance record?`)) {
+                        try {
+                            const deleteResponse = await fetch(`https://sti-attendance-api.glitch.me/attendance/${student.id}`, {
+                                method: 'DELETE'
+                            });
+                            if (deleteResponse.ok) {
+                                updateAttendanceTable(strandFilter, levelFilter); // Refresh the table after deletion
+                            } else {
+                                throw new Error('Failed to delete record.');
+                            }
+                        } catch (error) {
+                            console.error('Error deleting record:', error);
                         }
-                    } catch (error) {
-                        console.error('Error deleting record:', error);
                     }
-                }
-            });
+                });
+            }
 
             actionCell.appendChild(deleteButton);
         });
@@ -414,8 +417,6 @@ async function updateAttendanceTable(strandFilter = '', levelFilter = '') {
         alert('Failed to load or update attendance data.');
     }
 }
-
-
         document.getElementById('strandFilter').addEventListener('change', function (e) {
             updateAttendanceTable(e.target.value, document.getElementById('levelFilter').value);
         });
