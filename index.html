@@ -368,20 +368,14 @@
         </div>
     </div>
     <script>
-        function generateRandomString() {
-            return Math.random().toString(36).substr(2, 9); // Generates a random alphanumeric string
-        }
-
-        // Generate "check-in" QR code with random text
+        // Generate QR codes
         new QRCode(document.getElementById("checkInQR"), {
-            text: "check-in-" + generateRandomString(), // Add random string to "check-in"
+            text: "check-in",
             width: 200,
             height: 200,
         });
-
-        // Generate "check-out" QR code with static text (not random)
         new QRCode(document.getElementById("checkOutQR"), {
-            text: "check-out-123456789", // Static value for "check-out"
+            text: "check-out",
             width: 200,
             height: 200,
         });
