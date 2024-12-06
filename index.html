@@ -61,7 +61,8 @@
             box-sizing: border-box;
         }
 
-        h1, h2 {
+        h1,
+        h2 {
             margin-top: -0.3em;
             text-align: center;
             color: var(--text-color);
@@ -367,14 +368,20 @@
         </div>
     </div>
     <script>
-        // Generate QR codes
+        function generateRandomString() {
+            return Math.random().toString(36).substr(2, 9); // Generates a random alphanumeric string
+        }
+
+        // Generate "check-in" QR code with random text
         new QRCode(document.getElementById("checkInQR"), {
-            text: "check-in",
+            text: "check-in-" + generateRandomString(), // Add random string to "check-in"
             width: 200,
             height: 200,
         });
+
+        // Generate "check-out" QR code with static text (not random)
         new QRCode(document.getElementById("checkOutQR"), {
-            text: "check-out",
+            text: "check-out-123456789", // Static value for "check-out"
             width: 200,
             height: 200,
         });
